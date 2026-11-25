@@ -1,0 +1,13 @@
+# Локальный PostgreSQL (порт 5433, чтобы не конфликтовать с другими). Запуск: docker compose up -d
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ochag
+      POSTGRES_PASSWORD: ochag
+      POSTGRES_DB: ochag
+    ports: ["5433:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+volumes:
+  pgdata:

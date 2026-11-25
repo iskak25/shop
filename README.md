@@ -1,17 +1,19 @@
 # Очаг: витрина + склад
 
-Next.js 15 (витрина, `/admin`, API на route handlers) · Prisma · SQLite для разработки / PostgreSQL для продакшена.
+Next.js 15 (витрина, `/admin`, API на route handlers) · Prisma · PostgreSQL. Готов к деплою на Vercel.
 
 ## Запуск
 ```
+docker compose up -d           # локальный PostgreSQL на порту 5433
+cp .env.example .env           # (Windows: copy .env.example .env)
 npm install
-npx prisma migrate deploy      # создать БД
+npx prisma migrate deploy      # создать таблицы
 npm run db:seed                # демо-данные
 npm run dev                    # http://localhost:3000 , админка /admin
 ```
 Демо-вход (пароль `Ochag#2026`, меняется переменной `SEED_PASSWORD`): `owner@ochag.kg`, `admin@ochag.kg`, `seller@ochag.kg`.
 
-Переменные `.env`: `DATABASE_URL`, `AUTH_SECRET` (32+ символов, обязательно сменить), `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (без них уведомления пишутся в консоль).
+Переменные `.env`: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET` (32+ символов, обязательно сменить), `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (без них уведомления пишутся в консоль).
 
 ## Как устроен склад
 - Остаток = сумма движений `stock_movements`; `products.stock_qty / reserved_qty / cost_price` обновляются в той же транзакции.
@@ -21,10 +23,17 @@ npm run dev                    # http://localhost:3000 , админка /admin
 - Права: владелец / администратор / продавец проверяются на сервере (`requireUser`), закупка и прибыль отдаются только владельцу. Все изменения цен и остатков пишутся в `audit_log`.
 
 ## Фото товаров
-Админка → «Товары и цены» → «Фото (n)»: перетаскивание или выбор файлов (JPG, PNG, WebP, AVIF, до 10 МБ, до 10 на товар). Сервер превращает их в WebP (1600 px + миниатюра 480 px, прозрачность сохраняется, EXIF/GPS удаляются) и кладёт в `uploads/` (переменная `UPLOAD_DIR`). Эту папку нужно включить в ежедневный бэкап. Первое фото — главное. Без фото витрина показывает иллюстрацию.
+Админка → «Товары и цены» → «Фото (n)»: перетаскивание или выбор файлов (JPG, PNG, WebP, AVIF, до 10 МБ, до 10 на товар). Сервер превращает их в WebP (1600 px + миниатюра 480 px, прозрачность сохраняется, EXIF/GPS удаляются) и кладёт в Vercel Blob (если задан `BLOB_READ_WRITE_TOKEN`) или в папку `uploads/` (`UPLOAD_DIR`; на VPS её нужно включить в бэкап). Фото больше 3,5 МБ браузер уменьшает перед отправкой: лимит тела запроса на Vercel — 4,5 МБ. Первое фото — главное. Без фото витрина показывает иллюстрацию.
 
-## Переход на PostgreSQL
-См. `docker-compose.yml`. В коде нет SQL, специфичного для SQLite. Для строгой защиты от гонок на PostgreSQL условные `UPDATE` уже достаточны.
+## Деплой на Vercel
+1. Импортируйте репозиторий в Vercel (Framework: Next.js). Команду сборки менять не нужно: `vercel-build` сам делает `prisma generate`, `prisma migrate deploy` и `next build`.
+2. Storage → создайте PostgreSQL (Neon или Supabase через Marketplace). Задайте переменные: `DATABASE_URL` (pooled-адрес), `DIRECT_URL` (прямой адрес, нужен для миграций).
+3. Storage → создайте Blob-хранилище и подключите к проекту: Vercel добавит `BLOB_READ_WRITE_TOKEN`.
+4. Добавьте `AUTH_SECRET` (случайная строка 32+ символов, например `openssl rand -base64 48`) и при желании `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
+5. После первого деплоя один раз создайте сотрудников с вашего компьютера, указав адрес боевой БД:
+   `DATABASE_URL="..." DIRECT_URL="..." SEED_PASSWORD="свой-пароль" npm run db:seed`
+   (скрипт добавляет и демо-товары; удалите их в админке или не запускайте сид, если нужна пустая база).
+6. Тариф Hobby запрещает коммерческое использование: для магазина нужен Pro.
 
 ## Что ещё не сделано
 Интеграция с банком по API (вариант А), оплата по QR, импорт из Excel, кыргызский язык, мобильное приложение.
