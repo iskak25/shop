@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { HttpError, handle } from "@/server/http";
 import { createOrder } from "@/server/orders";
+import { getCustomer } from "@/server/account";
 
 const schema = z.object({
   customer: z.object({ name: z.string().trim().min(1, "Укажите имя"), phone: z.string().trim().min(9, "Укажите телефон"), address: z.string().optional() }),
@@ -13,5 +14,6 @@ const schema = z.object({
 export const POST = handle(async (req: Request) => {
   const b = schema.parse(await req.json());
   if (b.deliveryType === "delivery" && !b.address?.trim()) throw new HttpError(400, "Укажите адрес доставки");
-  return createOrder({ ...b, source: "site" }, null);
+  const account = await getCustomer(); // вошедший покупатель: заказ попадёт в его историю
+  return createOrder({ ...b, source: "site", accountId: account?.id }, null);
 });

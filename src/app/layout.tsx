@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
+import { AccountProvider } from "@/lib/account";
 import { CatalogProvider } from "@/lib/catalog";
 import { AppShell } from "@/components/shell";
 import { getPublicCategories, getPublicProducts } from "@/server/catalog";
@@ -26,7 +27,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main" className="sr-only">К основному содержимому</a>
         <CatalogProvider products={products} categories={categories}>
           <StoreProvider>
-            <AppShell>{children}</AppShell>
+            <AccountProvider>
+              <AppShell>{children}</AppShell>
+            </AccountProvider>
           </StoreProvider>
         </CatalogProvider>
       </body>

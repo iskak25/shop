@@ -8,10 +8,12 @@ import { ProductVisual } from "@/components/ProductVisual";
 import { fmt } from "@/lib/data";
 import { useCatalog } from "@/lib/catalog";
 import { useStore } from "@/lib/store";
+import { useAccount } from "@/lib/account";
 
 export default function CheckoutPage() {
   const { cart, total, clearCart } = useStore();
   const { get: getProduct } = useCatalog();
+  const { account } = useAccount();
   const [busy, setBusy] = useState(false);
   const [serverError, setServerError] = useState("");
   const [delivery, setDelivery] = useState("delivery");
@@ -84,8 +86,8 @@ export default function CheckoutPage() {
         <div className="checkout">
           <form className="glass-light panel stack" style={{ padding: 28 }} onSubmit={submit} noValidate>
             <div className="form-grid">
-              <GlassInput id="name" name="name" label="Имя" autoComplete="name" error={errors.name} />
-              <GlassInput id="phone" name="phone" label="Телефон" type="tel" inputMode="tel" autoComplete="tel" placeholder="+996" error={errors.phone} />
+              <GlassInput key={`n${account?.email}`} id="name" name="name" label="Имя" autoComplete="name" defaultValue={account?.name} error={errors.name} />
+              <GlassInput id="phone" name="phone" label="Телефон" type="tel" inputMode="tel" autoComplete="tel" placeholder="+996" defaultValue={account?.phone ?? ""} key={`p${account?.email}`} error={errors.phone} />
             </div>
             <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
               <legend className="field-label">Получение</legend>
@@ -95,7 +97,7 @@ export default function CheckoutPage() {
                 ))}
               </div>
             </fieldset>
-            {delivery === "delivery" && <GlassInput id="address" name="address" label="Адрес" autoComplete="street-address" error={errors.address} />}
+            {delivery === "delivery" && <GlassInput id="address" name="address" label="Адрес" autoComplete="street-address" defaultValue={account?.address ?? ""} error={errors.address} />}
             <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
               <legend className="field-label">Оплата</legend>
               <div className="choice">

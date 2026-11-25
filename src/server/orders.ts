@@ -6,6 +6,8 @@ import type { SessionUser } from "./auth";
 export interface OrderInput {
   source: "site" | "instagram" | "whatsapp" | "store";
   customer?: { name: string; phone: string; address?: string };
+  /** id покупателя с активной сессией: заказ попадёт в его историю */
+  accountId?: number;
   deliveryType: "delivery" | "pickup";
   address?: string;
   paymentMethod: "cash" | "qr" | "installment";
@@ -35,13 +37,27 @@ export async function createOrder(input: OrderInput, actor: SessionUser | null) 
   const hours = Number(await getSetting("installment_reserve_hours"));
 
   const created = await db.$transaction(async (tx) => {
-    const customer = input.customer
-      ? await tx.customer.upsert({
-          where: { phone: input.customer.phone },
-          update: { name: input.customer.name, address: input.customer.address },
-          create: { name: input.customer.name, phone: input.customer.phone, address: input.customer.address },
-        })
-      : null;
+    let customer = null;
+    if (input.accountId && input.customer) {
+      const acc = await tx.customer.findUnique({ where: { id: input.accountId } });
+      if (acc) {
+        const phoneTaken = acc.phone == null && (await tx.customer.findUnique({ where: { phone: input.customer.phone } }));
+        customer = await tx.customer.update({
+          where: { id: acc.id },
+          data: {
+            ...(acc.name.trim() ? {} : { name: input.customer.name }),
+            ...(acc.phone == null && !phoneTaken ? { phone: input.customer.phone } : {}),
+            ...(acc.address ? {} : { address: input.customer.address }),
+          },
+        });
+      }
+    }
+    if (!customer && input.customer)
+      customer = await tx.customer.upsert({
+        where: { phone: input.customer.phone },
+        update: { name: input.customer.name, address: input.customer.address },
+        create: { name: input.customer.name, phone: input.customer.phone, address: input.customer.address },
+      });
     let total = 0, discountSum = 0;
     const lines: { productId: number; qty: number; price: number; discount: number; meta?: string; name: string }[] = [];
     for (const it of input.items) {

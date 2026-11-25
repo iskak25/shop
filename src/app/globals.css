@@ -561,6 +561,10 @@ p {
 .menu-list a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 4px; font-size: 14px; border-top: 1px solid rgba(255,255,255,0.18); }
 .menu-list li:first-child a { border-top: 0; }
 .menu-list a:hover { opacity: 0.8; }
+.menu-list__btn { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 0 4px; font: inherit; font-size: 14px; color: inherit; text-align: left; background: none; border: 0; border-top: 1px solid rgba(255,255,255,0.18); cursor: pointer; }
+.menu-list__btn:hover { opacity: 0.8; }
+.linklike { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; color: var(--accent-text); text-decoration: underline; cursor: pointer; }
+.linklike[disabled] { opacity: 0.5; cursor: not-allowed; }
 
 .line { display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid rgba(255, 255, 255, 0.2); }
 .line:first-of-type { border-top: 0; }

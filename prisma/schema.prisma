@@ -145,15 +145,32 @@ model WriteOffItem {
 model Customer {
   id      Int     @id @default(autoincrement())
   name    String
-  phone   String  @unique
+  phone   String? @unique
+  email   String? @unique
   address String?
   orders  Order[]
+}
+
+/// Одноразовые коды для входа покупателя по email
+model EmailCode {
+  id        Int      @id @default(autoincrement())
+  email     String
+  ip        String
+  codeHash  String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+  @@index([ip, createdAt])
 }
 
 model Order {
   id            Int         @id @default(autoincrement())
   number        String      @unique
   customerId    Int?
+  contactName   String?
+  contactPhone  String? // телефон из формы заказа (может отличаться от телефона в профиле)
   source        String // site | instagram | whatsapp | store
   status        String      @default("new")
   paymentMethod String // cash | qr | installment

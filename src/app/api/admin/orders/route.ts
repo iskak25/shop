@@ -18,7 +18,7 @@ export const GET = handle(async (req: Request) => {
     orders: rows.map((o) => ({
       id: o.id, number: o.number, source: o.source, status: o.status, statusLabel: STATUS_RU[o.status], paymentMethod: o.paymentMethod, paymentStatus: o.paymentStatus,
       deliveryType: o.deliveryType, address: o.address, total: o.total, discount: o.discount, reserveUntil: o.reserveUntil, createdAt: o.createdAt,
-      customer: o.customer ? { name: o.customer.name, phone: o.customer.phone } : null,
+      customer: o.customer ? { name: o.customer.name, phone: o.contactPhone ?? o.customer.phone ?? "" } : null,
       items: o.items.map((i) => ({ name: i.product.nameRu, qty: i.qty, price: i.price, discount: i.discount, meta: i.meta })),
     })),
   };

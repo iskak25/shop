@@ -9,6 +9,7 @@ import { ProductVisual } from "./ProductVisual";
 import { fmt, type ColorOption, type Product } from "@/lib/data";
 import { useCatalog } from "@/lib/catalog";
 import { useStore } from "@/lib/store";
+import { initials, useAccount } from "@/lib/account";
 
 export function ColorSelector({ colors, value, onChange }: { colors: ColorOption[]; value: string; onChange: (name: string) => void }) {
   return (
@@ -227,22 +228,28 @@ export function CollectionHero({ title, items }: { title: string; items: { slug:
 }
 
 export function UserProfilePanel({ expanded }: { expanded?: boolean }) {
+  const { account, logout } = useAccount();
   return (
     <section className="panel glass-dark" aria-label="Профиль">
       <div className="panel__title">Мой профиль</div>
-      <div className="avatars">
-        <div className="avatar" aria-hidden>АТ</div>
-        <div>
-          <div style={{ fontWeight: 600 }}>Айдана Т.</div>
-          <div className="small muted">+996 700 000 000</div>
+      {account ? (
+        <div className="avatars">
+          <div className="avatar" aria-hidden>{initials(account)}</div>
+          <div>
+            <div style={{ fontWeight: 600 }}>{account.name.trim() || "Покупатель"}</div>
+            <div className="small muted">{account.email}</div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <p className="small muted" style={{ margin: "0 0 12px" }}>{account === undefined ? "Загружаем…" : "Войдите по email, чтобы видеть историю заказов."}</p>
+      )}
       <ul className="menu-list">
-        <li><Link href="/profile">Профиль</Link></li>
-        <li><Link href="/profile#orders">История заказов</Link></li>
+        <li><Link href="/profile">{account ? "Профиль" : "Войти"}</Link></li>
+        {account && <li><Link href="/profile#orders">История заказов</Link></li>}
         <li><Link href="/order-status">Статус заказа</Link></li>
         <li><Link href="/catalog">Персональные рекомендации</Link></li>
         {expanded && <li><Link href="/wishlist">Избранное</Link></li>}
+        {account && <li><button type="button" className="menu-list__btn" onClick={logout}>Выйти</button></li>}
       </ul>
     </section>
   );
