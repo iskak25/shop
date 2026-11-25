@@ -13,7 +13,7 @@ npm run dev                    # http://localhost:3000 , админка /admin
 ```
 Демо-вход (пароль `Ochag#2026`, меняется переменной `SEED_PASSWORD`): `owner@ochag.kg`, `admin@ochag.kg`, `seller@ochag.kg`.
 
-Переменные `.env`: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET` (32+ символов, обязательно сменить), `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (без них уведомления пишутся в консоль).
+Переменные `.env`: `DATABASE_URL`, `AUTH_SECRET` (32+ символов, обязательно сменить), `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (без них уведомления пишутся в консоль).
 
 ## Как устроен склад
 - Остаток = сумма движений `stock_movements`; `products.stock_qty / reserved_qty / cost_price` обновляются в той же транзакции.
@@ -27,7 +27,7 @@ npm run dev                    # http://localhost:3000 , админка /admin
 
 ## Деплой на Vercel
 1. Импортируйте репозиторий в Vercel (Framework: Next.js). Команду сборки менять не нужно: `vercel-build` сам делает `prisma generate`, `prisma migrate deploy` и `next build`.
-2. Storage → создайте PostgreSQL (Neon или Supabase через Marketplace). Задайте переменные: `DATABASE_URL` (pooled-адрес), `DIRECT_URL` (прямой адрес, нужен для миграций).
+2. Storage → создайте PostgreSQL (Neon или Supabase через Marketplace). Задайте `DATABASE_URL`. Если у провайдера есть отдельный прямой (не pooled) адрес, добавьте его как необязательную `DIRECT_URL`: миграции при сборке пойдут через него.
 3. Storage → создайте Blob-хранилище и подключите к проекту: Vercel добавит `BLOB_READ_WRITE_TOKEN`.
 4. Добавьте `AUTH_SECRET` (случайная строка 32+ символов, например `openssl rand -base64 48`) и при желании `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
 5. После первого деплоя один раз создайте сотрудников с вашего компьютера, указав адрес боевой БД:
