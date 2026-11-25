@@ -241,7 +241,7 @@ export function UserProfilePanel({ expanded }: { expanded?: boolean }) {
           </div>
         </div>
       ) : (
-        <p className="small muted" style={{ margin: "0 0 12px" }}>{account === undefined ? "Загружаем…" : "Войдите по email, чтобы видеть историю заказов."}</p>
+        <p className="small muted" style={{ margin: "0 0 12px" }}>{account === undefined ? "Загружаем…" : "Войдите или зарегистрируйтесь, чтобы видеть историю заказов."}</p>
       )}
       <ul className="menu-list">
         <li><Link href="/profile">{account ? "Профиль" : "Войти"}</Link></li>

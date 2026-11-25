@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { Reveal, GlassButton, GlassInput } from "@/components/glass";
 import { UserProfilePanel } from "@/components/product";
 import { api } from "@/lib/api";
@@ -10,50 +10,40 @@ import { useStore } from "@/lib/store";
 
 interface OrderRow { number: string; createdAt: string; statusLabel: string; total: number; items: string[] }
 
-/** Вход по одноразовому коду из письма: email → код. Новый email регистрируется автоматически. */
-function LoginForm() {
+/** Вход (email + пароль) и регистрация (имя, email, пароль и его повтор). */
+function AuthForm() {
   const { setAccount } = useAccount();
-  const [step, setStep] = useState<"email" | "code">("email");
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [f, setF] = useState({ name: "", email: "", password: "", password2: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const set = (k: keyof typeof f) => (e: ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
 
-  const send = async (e?: FormEvent) => {
-    e?.preventDefault();
-    setBusy(true); setErr("");
-    try { await api("/api/account/request-code", { body: { email } }); setStep("code"); setCode(""); }
-    catch (x) { setErr((x as Error).message); }
-    finally { setBusy(false); }
-  };
-  const verify = async (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true); setErr("");
-    try { setAccount((await api<{ customer: Account }>("/api/account/verify", { body: { email, code } })).customer); }
-    catch (x) { setErr((x as Error).message); }
+    try {
+      const body = mode === "login" ? { email: f.email, password: f.password } : f;
+      setAccount((await api<{ customer: Account }>(`/api/account/${mode}`, { body })).customer);
+    } catch (x) { setErr((x as Error).message); }
     finally { setBusy(false); }
   };
+  const ready = f.email.includes("@") && f.password.length > 0 && (mode === "login" || (f.name.trim() && f.password2));
 
   return (
     <section className="glass-light panel" style={{ padding: 28 }}>
-      <h1 className="display h2" style={{ marginBottom: 8 }}>Вход или регистрация</h1>
-      {step === "email" ? (
-        <form onSubmit={send} className="stack" noValidate>
-          <p className="muted small">Введите email: пришлём одноразовый код. Пароль не нужен, а новый адрес зарегистрируется сам.</p>
-          <GlassInput id="acc-email" type="email" label="Email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} error={err} />
-          <GlassButton type="submit" disabled={busy || !email.includes("@")}>{busy ? "Отправляем…" : "Получить код"}</GlassButton>
-        </form>
-      ) : (
-        <form onSubmit={verify} className="stack" noValidate>
-          <p className="muted small">Код отправлен на <b>{email}</b>. Он действует 10 минут. Проверьте папку «Спам».</p>
-          <GlassInput id="acc-code" label="Код из письма" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} error={err} autoFocus />
-          <GlassButton type="submit" disabled={busy || code.length !== 6}>{busy ? "Проверяем…" : "Войти"}</GlassButton>
-          <div style={{ display: "flex", gap: 16 }}>
-            <button type="button" className="linklike" onClick={() => { setStep("email"); setErr(""); }}>Изменить email</button>
-            <button type="button" className="linklike" disabled={busy} onClick={() => send()}>Отправить код ещё раз</button>
-          </div>
-        </form>
-      )}
+      <h1 className="display h2" style={{ marginBottom: 12 }}>{mode === "login" ? "Вход" : "Регистрация"}</h1>
+      <form onSubmit={submit} className="stack" noValidate>
+        {mode === "register" && <GlassInput id="a-name" label="Имя" autoComplete="name" value={f.name} onChange={set("name")} />}
+        <GlassInput id="a-email" type="email" label="Email" autoComplete="email" inputMode="email" value={f.email} onChange={set("email")} />
+        <GlassInput id="a-pass" type="password" label={mode === "register" ? "Пароль (не короче 8 символов)" : "Пароль"} autoComplete={mode === "login" ? "current-password" : "new-password"} value={f.password} onChange={set("password")} />
+        {mode === "register" && <GlassInput id="a-pass2" type="password" label="Повторите пароль" autoComplete="new-password" value={f.password2} onChange={set("password2")} />}
+        {err && <p className="field__err" role="alert">{err}</p>}
+        <GlassButton type="submit" disabled={busy || !ready}>{busy ? "Подождите…" : mode === "login" ? "Войти" : "Зарегистрироваться"}</GlassButton>
+        <button type="button" className="linklike" onClick={() => { setMode(mode === "login" ? "register" : "login"); setErr(""); }}>
+          {mode === "login" ? "Нет аккаунта? Зарегистрироваться" : "Уже есть аккаунт? Войти"}
+        </button>
+      </form>
     </section>
   );
 }
@@ -115,7 +105,7 @@ export default function ProfilePage() {
       <Reveal className="profile">
         <UserProfilePanel expanded />
         <div className="stack">
-          {account === undefined ? <p className="muted">Загружаем…</p> : account === null ? <LoginForm /> : (<><Details account={account} /><Orders /></>)}
+          {account === undefined ? <p className="muted">Загружаем…</p> : account === null ? <AuthForm /> : (<><Details account={account} /><Orders /></>)}
         </div>
       </Reveal>
     </div>

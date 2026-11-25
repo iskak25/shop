@@ -147,23 +147,11 @@ model Customer {
   name    String
   phone   String? @unique
   email   String? @unique
+  passwordHash String?
   address String?
   orders  Order[]
 }
 
-/// Одноразовые коды для входа покупателя по email
-model EmailCode {
-  id        Int      @id @default(autoincrement())
-  email     String
-  ip        String
-  codeHash  String
-  attempts  Int      @default(0)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@index([email, createdAt])
-  @@index([ip, createdAt])
-}
 
 model Order {
   id            Int         @id @default(autoincrement())

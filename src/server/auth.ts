@@ -55,11 +55,11 @@ export async function requireUser(...roles: Role[]) {
 
 // ограничение попыток входа: 5 неудач за 15 минут на пару IP+email; счётчик в БД, чтобы работало на нескольких экземплярах (Vercel)
 const WINDOW_MS = 15 * 60_000;
-async function throttle(key: string) {
+export async function throttle(key: string) {
   const a = await db.loginAttempt.findUnique({ where: { key } });
   if (a && Date.now() - a.firstAt.getTime() < WINDOW_MS && a.count >= 5) throw new HttpError(429, "Слишком много попыток. Попробуйте через 15 минут");
 }
-async function fail(key: string) {
+export async function fail(key: string) {
   const a = await db.loginAttempt.findUnique({ where: { key } });
   if (a && Date.now() - a.firstAt.getTime() < WINDOW_MS) await db.loginAttempt.update({ where: { key }, data: { count: { increment: 1 } } });
   else await db.loginAttempt.upsert({ where: { key }, create: { key, count: 1, firstAt: new Date() }, update: { count: 1, firstAt: new Date() } });
